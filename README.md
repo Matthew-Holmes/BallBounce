@@ -31,7 +31,25 @@ case WM_PAINT:
 
 To draw to the window we use the GDI plus library, following the tutorial from https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-drawing-a-line-use and changing the drawing of a line to a circle (special case of an ellipse) https://learn.microsoft.com/en-us/windows/win32/api/gdiplusgraphics/nf-gdiplusgraphics-graphics-drawellipse(constpen_constrectf_)
 
+By the end of this step we drew a red ball onto the window
+```
+VOID OnPaint(HDC hdc)
+{
+    Graphics graphics(hdc);
+    Pen      redPen(Color(255, 255, 0, 0));
+    SolidBrush redSolidBrush(Color(255, 255, 0, 0));
+
+    // Create a Rect object that bounds the ellipse.
+    RectF ellipseRect(50.0f, 50.0f, 100.0f, 100.0f);
+    // Draw the ellipse.
+    graphics.DrawEllipse(&redPen, ellipseRect);
+    graphics.FillEllipse(&redSolidBrush, ellipseRect);
+}
+```
+
 #### Notes
+
+Drawing a filled in circle requires both a pen and brush, https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-brushes-and-filled-shapes-about since we want a filled shape
 
 We don't use the `#include <stdafx.h>` line since this is for precompiled headers for speedup https://stackoverflow.com/questions/4726155/what-is-stdafx-h-used-for-in-visual-studio
 
