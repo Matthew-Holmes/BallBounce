@@ -35,6 +35,6 @@ To draw to the window we use the GDI plus library, following the tutorial from h
 
 We don't use the `#include <stdafx.h>` line since this is for precompiled headers for speedup https://stackoverflow.com/questions/4726155/what-is-stdafx-h-used-for-in-visual-studio
 
-The tutorial use the namespace `using namespace Gdiplus;` so we should keep everything else prefixed, e.g. `std::` to avoid mix ups
+The tutorial uses the namespace `using namespace Gdiplus;` so we should keep everything else prefixed, e.g. `std::` to avoid mix ups
 
 `#pragma comment (lib,"Gdiplus.lib")` is a message to the compiler to leave a comment in the generated object file https://stackoverflow.com/questions/3484434/what-does-pragma-comment-mean
