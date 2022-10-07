@@ -38,3 +38,15 @@ We don't use the `#include <stdafx.h>` line since this is for precompiled header
 The tutorial uses the namespace `using namespace Gdiplus;` so we should keep everything else prefixed, e.g. `std::` to avoid mix ups
 
 `#pragma comment (lib,"Gdiplus.lib")` is a message to the compiler to leave a comment in the generated object file https://stackoverflow.com/questions/3484434/what-does-pragma-comment-mean
+
+I added the necessary lines from the GDI tutorial into the first tutorials code, a few differences in the code used by each were:
+* The GDI tutorial declared all the variables at the start of the class:
+```
+   HWND                hWnd;
+   MSG                 msg;
+   WNDCLASS            wndClass;
+   GdiplusStartupInput gdiplusStartupInput;
+   ULONG_PTR           gdiplusToken;
+```
+Whereas the application tutorial interspersed them with the code, defining before each variables' first usage
+* The GDI tutorial uses `WNDCLASS            wndClass;` whereas the application tutorial uses `WNDCLASSEX wcex;` https://cboard.cprogramming.com/windows-programming/77003-whats-difference-between-wndclass-wndclassex.html
