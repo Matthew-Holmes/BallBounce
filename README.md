@@ -27,3 +27,10 @@ case WM_PAINT:
       break;
 ```
 
+### 2. Drawing
+
+To draw to the window we use the GDI plus library, following the tutorial from https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-drawing-a-line-use
+
+#### Notes
+
+We don't use the `#include <stdafx.h>` line since this is for precompiled headers for speedup https://stackoverflow.com/questions/4726155/what-is-stdafx-h-used-for-in-visual-studio
