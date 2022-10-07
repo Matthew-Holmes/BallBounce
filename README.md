@@ -29,7 +29,7 @@ case WM_PAINT:
 
 ### 2. Drawing
 
-To draw to the window we use the GDI plus library, following the tutorial from https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-drawing-a-line-use
+To draw to the window we use the GDI plus library, following the tutorial from https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-drawing-a-line-use and changing the drawing of a line to a circle (special case of an ellipse) https://learn.microsoft.com/en-us/windows/win32/api/gdiplusgraphics/nf-gdiplusgraphics-graphics-drawellipse(constpen_constrectf_)
 
 #### Notes
 
