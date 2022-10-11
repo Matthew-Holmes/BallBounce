@@ -87,7 +87,7 @@ It is essential to include the `InvalidateRect(hWnd, NULL, true)` line, which te
 
 Calling `InvalidateRect(hWnd, NULL, true)` triggers a message to paint the window again, now with the updated coordinates.
 
-### 4 Animating II - Buffering
+### 4. Animating II - Buffering
 
 As it stands the previous steps produce a window which a ball moves across, however the graphics flicker. To solve this we use buffered paint, as discussed in: https://stackoverflow.com/questions/51329024/gdi-flickering
 
@@ -117,5 +117,39 @@ And do this by hand, first drawing a white rectangle in the `OnPaint` function.
 
 The buffering is then necessary since the `OnPaint` funtion draws the background, the ball's outline then the ball in sucession, which unless buffered, leads to flickering.
 
+### 4. Animating III - Rebounds
 
+A quick update to the timer handler makes the ball bounce from the windows edge: 
+```
+    case WM_TIMER: {
+        InvalidateRect(hWnd, NULL, TRUE);
+        xPos += xVel;
+        yPos += yVel;
+        GetClientRect(hWnd, &rc);
+
+        if (xPos - RADIUS <= 0 || xPos + RADIUS >= rc.right) {
+            // ensure no shivering on margin
+            double eps = distribution(generator);
+            xVel = ((1 - 2 * (xPos - RADIUS > 0)) * XSPEED) + eps;
+        }
+        if (yPos - RADIUS <= 0 || yPos + RADIUS >= rc.bottom) {
+            double eps = distribution(generator);
+            yVel = ((1 - 2 * (yPos - RADIUS > 0)) * YSPEED) + eps;
+        }
+        
+    }
+        break;
+```
+
+#### Notes
+We don't just flip the speed since this can lead to the ball getting stuck on the edge, instead setting its velocity direction according to which side of the screen the ball is at
+
+We also include some random noise to stop the path being entirely deterministic, the noise follows distribution:
+```
+std::default_random_engine generator;
+std::uniform_real_distribution<REAL> distribution(-0.25f, 0.25f);
+```
+taken from the `<random>` header
+
+### 5. Pausing
 
