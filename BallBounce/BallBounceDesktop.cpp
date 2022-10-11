@@ -1,10 +1,29 @@
 // HelloWindowsDesktop.cpp
 // compile with: /D_UNICODE /DUNICODE /DWIN32 /D_WINDOWS /c
+// https://learn.microsoft.com/en-us/cpp/windows/walkthrough-creating-windows-desktop-applications-cpp?view=msvc-170
 
 #include <windows.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
+
+#include <iostream>
+
+// For drawing 
+// https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-drawing-a-line-use
+// The <stdafx.h> is omitted since that is for precompiled headers
+#include <objidl.h>
+#include <gdiplus.h>
+
+using namespace Gdiplus;
+#pragma comment (lib,"Gdiplus.lib")
+// Pragma comment is a message to the compiler to inclue a comment in the generated object file
+
+
+// Forward declarations of functions included in this code module:
+// Used in both tutorials
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
 
 // Global variables
 
@@ -17,8 +36,28 @@ static TCHAR szTitle[] = _T("Ball Bounce");
 // Stored instance handle for use in Win32 API calls such as FindResource
 HINSTANCE hInst;
 
-// Forward declarations of functions included in this code module:
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+// Radius of the ball we draw
+// use float since this is the datatype REAL used by GDIplus
+constexpr REAL RADIUS = 50.0f;
+REAL xPos = 100.0f, yPos = 100.0f, xVel = 1.0f, yVel = 0.75f;
+
+VOID OnPaint(HDC hdc, REAL x, REAL y, int r, int g, int b, int width = 0, int height = 0)
+// paint a ball at (x,y)
+{
+    Graphics graphics(hdc);
+    Pen      redPen(Color(r, g, b));
+    SolidBrush redSolidBrush(Color(r, g, b));
+    SolidBrush back(Color(255, 255, 255));
+
+    // background
+    graphics.FillRectangle(&back, 0, 0, width, height);
+    // Create a Rect object that bounds the ellipse.
+    RectF ellipseRect(x - RADIUS, y - RADIUS ,2 * RADIUS, 2 *RADIUS);
+    // Draw the ellipse.
+    graphics.DrawEllipse(&redPen, ellipseRect);
+    graphics.FillEllipse(&redSolidBrush, ellipseRect);
+}
+
 
 int WINAPI WinMain(
     _In_ HINSTANCE hInstance,
@@ -28,6 +67,14 @@ int WINAPI WinMain(
 )
 {
     WNDCLASSEX wcex;
+
+    // GDI stuff
+    GdiplusStartupInput gdiplusStartupInput;
+    ULONG_PTR           gdiplusToken;
+
+    // Initialize GDI+.
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
 
     wcex.cbSize = sizeof(WNDCLASSEX);
     wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -72,7 +119,7 @@ int WINAPI WinMain(
         szTitle,
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT,
-        500, 100,
+        700, 400,
         NULL,
         NULL,
         hInstance,
@@ -103,7 +150,7 @@ int WINAPI WinMain(
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-
+    GdiplusShutdown(gdiplusToken);
     return (int)msg.wParam;
 }
 
@@ -117,26 +164,40 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC hdc;
-    TCHAR greeting[] = _T("Hello, Windows desktop!");
+    HDC hdcBuffer;
+    RECT rc; 
+    HBITMAP bufBM;
+
 
     switch (message)
     {
+    case WM_CREATE:
+        hdc = GetDC(hWnd);
+        SetTimer(hWnd, 1, 10, NULL);
+        break;
+    case WM_TIMER: {
+        InvalidateRect(hWnd, NULL, TRUE);
+        xPos += xVel;
+        yPos += yVel;
+    }
+        break;
     case WM_PAINT:
+        GetClientRect(hWnd, &rc);
         hdc = BeginPaint(hWnd, &ps);
-
-        // Here your application is laid out.
-        // For this introduction, we just print out "Hello, Windows desktop!"
-        // in the top left corner.
-        TextOut(hdc,
-            5, 5,
-            greeting, _tcslen(greeting));
-        // End application-specific layout section.
-
+        hdcBuffer = CreateCompatibleDC(hdc);
+        bufBM = CreateCompatibleBitmap(hdc, rc.right, rc.bottom);
+        SelectObject(hdcBuffer, bufBM);
+        OnPaint(hdcBuffer, xPos, yPos, 255, 0, 0, rc.right, rc.bottom);
+        BitBlt(hdc, 0, 0, rc.right, rc.bottom, hdcBuffer, 0, 0, SRCCOPY);
+        DeleteObject(bufBM);
         EndPaint(hWnd, &ps);
         break;
     case WM_DESTROY:
+        KillTimer(hWnd, 1);
         PostQuitMessage(0);
         break;
+    case WM_ERASEBKGND:
+        return true;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
         break;
