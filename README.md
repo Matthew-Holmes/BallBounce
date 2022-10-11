@@ -142,7 +142,7 @@ A quick update to the timer handler makes the ball bounce from the windows edge:
 ```
 
 #### Notes
-We don't just flip the speed since this can lead to the ball getting stuck on the edge, instead setting its velocity direction according to which side of the screen the ball is at
+We don't just flip the speed since this can lead to the ball getting stuck on the edge, instead setting its velocity direction according to which side of the screen the ball is at. This also means that should the ball be outside of the visible area it will move back to the visible portion.
 
 We also include some random noise to stop the path being entirely deterministic, the noise follows distribution:
 ```
@@ -153,3 +153,26 @@ taken from the `<random>` header
 
 ### 5. Pausing
 
+Finally we copy the original drawing at timed interval guide and pause the motion when the window is minimise, by keeping track of an `idTimer` variable, and handling a few more messages: 
+
+```case WM_SIZE:
+        switch (wParam)
+        {
+        case SIZE_MINIMIZED:
+            // Stop the timer if the window is minimized. 
+            KillTimer(hWnd, 1);
+            idTimer = -1;
+            break;
+        case SIZE_RESTORED:
+            if (idTimer == -1)
+                SetTimer(hWnd, idTimer = 1, 10, NULL);
+            break;
+        case SIZE_MAXIMIZED:
+            if (idTimer == -1)
+                SetTimer(hWnd, idTimer = 1, 10, NULL);
+            break;
+        }
+        return 0L;
+  ```
+
+TODO - https://stackoverflow.com/questions/62173013/gdi-text-flickering-and-now-with-black-background
