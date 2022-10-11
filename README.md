@@ -89,5 +89,33 @@ Calling `InvalidateRect(hWnd, NULL, true)` triggers a message to paint the windo
 
 ### 4 Animating II - Buffering
 
-As it stands the previous steps produce a window which a ball moves across, however the graphics flicker. To solve this we use buffered paint, as discussed in: https://stackoverflow.com/questions/51329024/gdi-flickering 
+As it stands the previous steps produce a window which a ball moves across, however the graphics flicker. To solve this we use buffered paint, as discussed in: https://stackoverflow.com/questions/51329024/gdi-flickering
+
+The detailed methodology is taken from https://forums.codeguru.com/showthread.php?523273-GDI-and-double-buffering, we draw onto a virtual context, then copy that onto the actual displayed window.
+
+```
+    case WM_PAINT:
+        GetClientRect(hWnd, &rc);
+        hdc = BeginPaint(hWnd, &ps);
+        hdcBuffer = CreateCompatibleDC(hdc);
+        bufBM = CreateCompatibleBitmap(hdc, rc.right, rc.bottom);
+        SelectObject(hdcBuffer, bufBM);
+        OnPaint(hdcBuffer, xPos, yPos, 255, 0, 0, rc.right, rc.bottom);
+        BitBlt(hdc, 0, 0, rc.right, rc.bottom, hdcBuffer, 0, 0, SRCCOPY);
+        DeleteObject(bufBM);
+        EndPaint(hWnd, &ps);
+        break;
+```
+#### Notes
+
+To remove one source of flickering we disable the call to erase the background:
+```
+case WM_ERASEBKGND:
+        return true;
+```
+And do this by hand, first drawing a white rectangle in the `OnPaint` function.
+
+The buffering is then necessary since the `OnPaint` funtion draws the background, the ball's outline then the ball in sucession, which unless buffered, leads to flickering.
+
+
 
