@@ -15,6 +15,8 @@
 #include <objidl.h>
 #include <gdiplus.h>
 
+#include <random>
+
 using namespace Gdiplus;
 #pragma comment (lib,"Gdiplus.lib")
 // Pragma comment is a message to the compiler to inclue a comment in the generated object file
@@ -162,6 +164,11 @@ int WINAPI WinMain(
 //
 //  WM_PAINT    - Paint the main window
 //  WM_DESTROY  - post a quit message and return
+std::default_random_engine generator;
+std::uniform_real_distribution<REAL> distribution(-0.25f, 0.25f);
+int idTimer = -1;
+
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
@@ -175,19 +182,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
         hdc = GetDC(hWnd);
-        SetTimer(hWnd, 1, 10, NULL);
+        SetTimer(hWnd, idTimer = 1, 10, NULL);
         break;
     case WM_TIMER: {
         InvalidateRect(hWnd, NULL, TRUE);
         xPos += xVel;
         yPos += yVel;
         GetClientRect(hWnd, &rc);
+
         if (xPos - RADIUS <= 0 || xPos + RADIUS >= rc.right) {
             // ensure no shivering on margin
-            xVel = (1 - 2 * (xPos - RADIUS > 0)) * XSPEED;
+            double eps = distribution(generator);
+            xVel = ((1 - 2 * (xPos - RADIUS > 0)) * XSPEED) + eps;
         }
         if (yPos - RADIUS <= 0 || yPos + RADIUS >= rc.bottom) {
-            yVel = (1 - 2 * (yPos - RADIUS > 0)) * YSPEED;
+            double eps = distribution(generator);
+            yVel = ((1 - 2 * (yPos - RADIUS > 0)) * YSPEED) + eps;
         }
         
     }
@@ -209,6 +219,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_ERASEBKGND:
         return true;
+    case WM_SIZE:
+        switch (wParam)
+        {
+        case SIZE_MINIMIZED:
+            // Stop the timer if the window is minimized. 
+            KillTimer(hWnd, 1);
+            idTimer = -1;
+            break;
+        case SIZE_RESTORED:
+            if (idTimer == -1)
+                SetTimer(hWnd, idTimer = 1, 10, NULL);
+            break;
+        case SIZE_MAXIMIZED:
+            if (idTimer == -1)
+                SetTimer(hWnd, idTimer = 1, 10, NULL);
+            break;
+        }
+        return 0L;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
         break;
