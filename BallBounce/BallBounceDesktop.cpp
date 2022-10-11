@@ -39,7 +39,9 @@ HINSTANCE hInst;
 // Radius of the ball we draw
 // use float since this is the datatype REAL used by GDIplus
 constexpr REAL RADIUS = 50.0f;
-REAL xPos = 100.0f, yPos = 100.0f, xVel = 1.0f, yVel = 0.75f;
+constexpr REAL XSPEED = 1.0f;
+constexpr REAL YSPEED = 0.75f;
+REAL xPos = 100.0f, yPos = 100.0f, xVel = XSPEED, yVel = YSPEED;
 
 VOID OnPaint(HDC hdc, REAL x, REAL y, int r, int g, int b, int width = 0, int height = 0)
 // paint a ball at (x,y)
@@ -179,6 +181,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         InvalidateRect(hWnd, NULL, TRUE);
         xPos += xVel;
         yPos += yVel;
+        GetClientRect(hWnd, &rc);
+        if (xPos - RADIUS <= 0 || xPos + RADIUS >= rc.right) {
+            // ensure no shivering on margin
+            xVel = (1 - 2 * (xPos - RADIUS > 0)) * XSPEED;
+        }
+        if (yPos - RADIUS <= 0 || yPos + RADIUS >= rc.bottom) {
+            yVel = (1 - 2 * (yPos - RADIUS > 0)) * YSPEED;
+        }
+        
     }
         break;
     case WM_PAINT:
