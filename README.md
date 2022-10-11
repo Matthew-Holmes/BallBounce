@@ -53,8 +53,6 @@ Drawing a filled in circle requires both a pen and brush, https://learn.microsof
 
 We don't use the `#include <stdafx.h>` line since this is for precompiled headers for speedup https://stackoverflow.com/questions/4726155/what-is-stdafx-h-used-for-in-visual-studio
 
-The tutorial uses the namespace `using namespace Gdiplus;` so we should keep everything else prefixed, e.g. `std::` to avoid mix ups
-
 `#pragma comment (lib,"Gdiplus.lib")` is a message to the compiler to leave a comment in the generated object file https://stackoverflow.com/questions/3484434/what-does-pragma-comment-mean
 
 I added the necessary lines from the GDI tutorial into the first tutorials code, a few differences in the code used by each were:
@@ -68,3 +66,28 @@ I added the necessary lines from the GDI tutorial into the first tutorials code,
 ```
 Whereas the application tutorial interspersed them with the code, defining before each variables' first usage
 * The GDI tutorial uses `WNDCLASS            wndClass;` whereas the application tutorial uses `WNDCLASSEX wcex;` https://cboard.cprogramming.com/windows-programming/77003-whats-difference-between-wndclass-wndclassex.html
+
+### 3. Animating I
+
+Now we want to have the ball move across the screen, to do this we redraw it at timed intervals, following this guide: https://learn.microsoft.com/en-us/windows/win32/gdi/drawing-at-timed-intervals. Which begins a 10 milisecond timer that sends a message to redraw the ball when it finishes. The `OnPaint` functions was updated to include variable position. 
+
+```
+case WM_TIMER:
+        InvalidateRect(hWnd, NULL, true); // erase the previous image
+
+        xPos += xVel;
+        yPos += yVel;
+ 
+        break;
+```
+
+#### Notes
+
+It is essential to include the `InvalidateRect(hWnd, NULL, true)` line, which tells windows that it must redraw the window's contents, otherwise the ball will only appear to move if we minimise and reopen the window, or resize it. Operations which trigger the window to be forcefully updated.
+
+Calling `InvalidateRect(hWnd, NULL, true)` triggers a message to paint the window again, now with the updated coordinates.
+
+### 4 Animating II - Buffering
+
+As it stands the previous steps produce a window which a ball moves across, however the graphics flicker. To solve this we use buffered paint, as discussed in: https://stackoverflow.com/questions/51329024/gdi-flickering 
+
