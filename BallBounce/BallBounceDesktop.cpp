@@ -1,17 +1,8 @@
-// HelloWindowsDesktop.cpp
-// compile with: /D_UNICODE /DUNICODE /DWIN32 /D_WINDOWS /c
-// https://learn.microsoft.com/en-us/cpp/windows/walkthrough-creating-windows-desktop-applications-cpp?view=msvc-170
-
 #include <windows.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
 
-#include <iostream>
-
-// For drawing 
-// https://learn.microsoft.com/en-us/windows/win32/gdiplus/-gdiplus-drawing-a-line-use
-// The <stdafx.h> is omitted since that is for precompiled headers
 #include <objidl.h>
 #include <gdiplus.h>
 
@@ -24,36 +15,33 @@ using namespace Gdiplus;
 
 
 // Forward declarations of functions included in this code module:
-// Used in both tutorials
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+VOID OnPaint(HDC, REAL, REAL, int, int, int, int, int);
 
 
-// Global variables
-
-// The main window class name.
+// Global variables for windows
 static TCHAR szWindowClass[] = _T("Ball Bounce");
-
-// The string that appears in the application's title bar.
 static TCHAR szTitle[] = _T("Ball Bounce");
-
-// Stored instance handle for use in Win32 API calls such as FindResource
 HINSTANCE hInst;
 
-// Radius of the ball we draw
-// use float since this is the datatype REAL used by GDIplus
+// Globals for ball
 constexpr REAL RADIUS = 50.0f;
 constexpr REAL XSPEED = 1.0f;
 constexpr REAL YSPEED = 0.75f;
 const REAL SPEED = std::sqrt(XSPEED * XSPEED + YSPEED * YSPEED); 
-
 REAL xPos = 100.0f, yPos = 100.0f, xVel = XSPEED, yVel = YSPEED;
+// for adding noise to bounce
+std::default_random_engine GENERATOR;
+std::uniform_real_distribution<REAL> DISTRIBUTION(-0.1f, 0.1f);
+// timer toggle
+int IDTIMER = 1;
 
 VOID OnPaint(HDC hdc, REAL x, REAL y, int r, int g, int b, int width = 0, int height = 0)
-// paint a ball at (x,y)
+// paint a ball at (x,y) with colour (r, g, b) onto window with width and height
 {
     Graphics graphics(hdc);
-    Pen      redPen(Color(r, g, b));
-    SolidBrush redSolidBrush(Color(r, g, b));
+    Pen      ColorPen(Color(r, g, b));
+    SolidBrush ColorSolidBrush(Color(r, g, b));
     SolidBrush back(Color(255, 255, 255));
 
     // background
@@ -61,8 +49,8 @@ VOID OnPaint(HDC hdc, REAL x, REAL y, int r, int g, int b, int width = 0, int he
     // Create a Rect object that bounds the ellipse.
     RectF ellipseRect(x - RADIUS, y - RADIUS ,2 * RADIUS, 2 *RADIUS);
     // Draw the ellipse.
-    graphics.DrawEllipse(&redPen, ellipseRect);
-    graphics.FillEllipse(&redSolidBrush, ellipseRect);
+    graphics.DrawEllipse(&ColorPen, ellipseRect);
+    graphics.FillEllipse(&ColorSolidBrush, ellipseRect);
 }
 
 
@@ -161,16 +149,6 @@ int WINAPI WinMain(
     return (int)msg.wParam;
 }
 
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE:  Processes messages for the main window.
-//
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-std::default_random_engine generator;
-std::uniform_real_distribution<REAL> distribution(-0.1f, 0.1f);
-int idTimer = -1;
-
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -180,12 +158,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     RECT rc; 
     HBITMAP bufBM;
 
-
     switch (message)
     {
     case WM_CREATE:
         hdc = GetDC(hWnd);
-        SetTimer(hWnd, idTimer = 1, 10, NULL);
+        SetTimer(hWnd, IDTIMER = 1, 10, NULL);
         break;
     case WM_TIMER: {
         InvalidateRect(hWnd, NULL, TRUE);
@@ -195,26 +172,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         if (xPos - RADIUS <= 0 || xPos + RADIUS >= rc.right) {
             // ensure no shivering on margin
-            double eps = distribution(generator);
+            double eps = DISTRIBUTION(GENERATOR);
             xVel = ((1 - 2 * (xPos - RADIUS > 0)) * XSPEED) + eps;
             yVel = (1 - 2 * (yVel < 0)) * std::sqrt(SPEED * SPEED - xVel * xVel);
             // maintain constant speed
         }
         if (yPos - RADIUS <= 0 || yPos + RADIUS >= rc.bottom) {
-            double eps = distribution(generator);
+            double eps = DISTRIBUTION(GENERATOR);
             yVel = ((1 - 2 * (yPos - RADIUS > 0)) * YSPEED) + eps;
             xVel = (1 - 2 * (xVel < 0)) * std::sqrt(SPEED * SPEED - yVel * yVel);
         }
-        
     }
         break;
     case WM_PAINT:
         GetClientRect(hWnd, &rc);
         hdc = BeginPaint(hWnd, &ps);
+        // construct a virtual DC to paint onto
         hdcBuffer = CreateCompatibleDC(hdc);
         bufBM = CreateCompatibleBitmap(hdc, rc.right, rc.bottom);
         SelectObject(hdcBuffer, bufBM);
+        // paint onto it
         OnPaint(hdcBuffer, xPos, yPos, 255, 0, 0, rc.right, rc.bottom);
+        // copy into the actual window
         BitBlt(hdc, 0, 0, rc.right, rc.bottom, hdcBuffer, 0, 0, SRCCOPY);
         DeleteObject(bufBM);
         EndPaint(hWnd, &ps);
@@ -231,15 +210,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case SIZE_MINIMIZED:
             // Stop the timer if the window is minimized. 
             KillTimer(hWnd, 1);
-            idTimer = -1;
+            IDTIMER = -1;
             break;
         case SIZE_RESTORED:
-            if (idTimer == -1)
-                SetTimer(hWnd, idTimer = 1, 10, NULL);
+            if (IDTIMER == -1)
+                SetTimer(hWnd, IDTIMER = 1, 10, NULL);
             break;
         case SIZE_MAXIMIZED:
-            if (idTimer == -1)
-                SetTimer(hWnd, idTimer = 1, 10, NULL);
+            if (IDTIMER == -1)
+                SetTimer(hWnd, IDTIMER = 1, 10, NULL);
             break;
         }
         return 0L;
