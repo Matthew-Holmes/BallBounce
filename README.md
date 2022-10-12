@@ -121,7 +121,7 @@ The buffering is then necessary since the `OnPaint` funtion draws the background
 
 A quick update to the timer handler makes the ball bounce from the windows edge: 
 ```
-    case WM_TIMER: {
+   case WM_TIMER: {
         InvalidateRect(hWnd, NULL, TRUE);
         xPos += xVel;
         yPos += yVel;
@@ -131,10 +131,13 @@ A quick update to the timer handler makes the ball bounce from the windows edge:
             // ensure no shivering on margin
             double eps = distribution(generator);
             xVel = ((1 - 2 * (xPos - RADIUS > 0)) * XSPEED) + eps;
+            yVel = (1 - 2 * (yVel < 0)) * std::sqrt(SPEED * SPEED - xVel * xVel);
+            // maintain constant speed
         }
         if (yPos - RADIUS <= 0 || yPos + RADIUS >= rc.bottom) {
             double eps = distribution(generator);
             yVel = ((1 - 2 * (yPos - RADIUS > 0)) * YSPEED) + eps;
+            xVel = (1 - 2 * (xVel < 0)) * std::sqrt(SPEED * SPEED - yVel * yVel);
         }
         
     }
@@ -150,6 +153,8 @@ std::default_random_engine generator;
 std::uniform_real_distribution<REAL> distribution(-0.25f, 0.25f);
 ```
 taken from the `<random>` header
+
+A constant `SPEED` is used to adjust the perpendicular speed also so that the ball maintains a fixed speed across the screen.
 
 ### 5. Pausing
 
