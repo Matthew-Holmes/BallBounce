@@ -113,7 +113,7 @@ To remove one source of flickering we disable the call to erase the background:
 case WM_ERASEBKGND:
         return true;
 ```
-And do this by hand, first drawing a white rectangle in the `OnPaint` function.
+And do this by hand, first drawing a white rectangle in the `OnPaint` functionm, which now takes more inputs to both change the ball's colour and specify the size of the window.
 
 The buffering is then necessary since the `OnPaint` funtion draws the background, the ball's outline then the ball in sucession, which unless buffered, leads to flickering.
 
