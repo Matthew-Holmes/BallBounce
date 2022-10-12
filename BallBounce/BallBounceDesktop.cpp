@@ -16,6 +16,7 @@
 #include <gdiplus.h>
 
 #include <random>
+#include <cmath>
 
 using namespace Gdiplus;
 #pragma comment (lib,"Gdiplus.lib")
@@ -43,6 +44,8 @@ HINSTANCE hInst;
 constexpr REAL RADIUS = 50.0f;
 constexpr REAL XSPEED = 1.0f;
 constexpr REAL YSPEED = 0.75f;
+const REAL SPEED = std::sqrt(XSPEED * XSPEED + YSPEED * YSPEED); 
+
 REAL xPos = 100.0f, yPos = 100.0f, xVel = XSPEED, yVel = YSPEED;
 
 VOID OnPaint(HDC hdc, REAL x, REAL y, int r, int g, int b, int width = 0, int height = 0)
@@ -165,7 +168,7 @@ int WINAPI WinMain(
 //  WM_PAINT    - Paint the main window
 //  WM_DESTROY  - post a quit message and return
 std::default_random_engine generator;
-std::uniform_real_distribution<REAL> distribution(-0.25f, 0.25f);
+std::uniform_real_distribution<REAL> distribution(-0.1f, 0.1f);
 int idTimer = -1;
 
 
@@ -194,10 +197,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // ensure no shivering on margin
             double eps = distribution(generator);
             xVel = ((1 - 2 * (xPos - RADIUS > 0)) * XSPEED) + eps;
+            yVel = (1 - 2 * (yVel < 0)) * std::sqrt(SPEED * SPEED - xVel * xVel);
+            // maintain constant speed
         }
         if (yPos - RADIUS <= 0 || yPos + RADIUS >= rc.bottom) {
             double eps = distribution(generator);
             yVel = ((1 - 2 * (yPos - RADIUS > 0)) * YSPEED) + eps;
+            xVel = (1 - 2 * (xVel < 0)) * std::sqrt(SPEED * SPEED - yVel * yVel);
         }
         
     }
