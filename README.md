@@ -91,7 +91,7 @@ Calling `InvalidateRect(hWnd, NULL, true)` triggers a message to paint the windo
 
 As it stands the previous steps produce a window which a ball moves across, however the graphics flicker. To solve this we use buffered paint, as discussed in: https://stackoverflow.com/questions/51329024/gdi-flickering
 
-The methodology is as discuessed in https://forums.codeguru.com/showthread.php?523273-GDI-and-double-buffering, we draw onto a virtual context, then copy that onto the actual displayed window.
+The methodology is as discussed in https://forums.codeguru.com/showthread.php?523273-GDI-and-double-buffering, we draw onto a virtual context, then copy that onto the actual displayed window.
 
 ```
     case WM_PAINT:
