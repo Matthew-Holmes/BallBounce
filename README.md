@@ -179,5 +179,3 @@ Finally we copy the original drawing at timed interval guide and pause the motio
         }
         return 0L;
   ```
-
-TODO - https://stackoverflow.com/questions/62173013/gdi-text-flickering-and-now-with-black-background
